@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"strings"
@@ -23,6 +24,7 @@ type cliCommand struct {
 type config struct {
 	next     string
 	previous string
+	pokedex  map[string]Pokemon
 	cache    *internal.PokeCache
 }
 
@@ -33,6 +35,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	config := config{}
 	config.cache = internal.NewCache(30)
+	config.pokedex = map[string]Pokemon{}
 
 	supportedCommands = map[string]cliCommand{
 		"map": {
@@ -49,6 +52,11 @@ func main() {
 			name:        "explore",
 			description: "Displays pokemon names of provided location areas.",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Catch a pokemon",
+			callback:    commandCatch,
 		},
 		"help": {
 			name:        "help",
@@ -210,6 +218,51 @@ type LocationPokeApiResponse struct {
 			Version   PokemonVersion `json:"version"`
 		} `json:"version_details"`
 	} `json:"pokemon_encounters"`
+}
+
+func commandCatch(config *config, params []string) error {
+	pokemonName := params[0]
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
+	url := "https://pokeapi.co/api/v2/pokemon/" + pokemonName
+
+	pokemon, err := queryPokemonInfo(config, url)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if pokemon.BaseExperience > rand.IntN(999) {
+		fmt.Printf("%s escaped!\n", pokemon.Name)
+		return nil
+	}
+
+	fmt.Println(pokemon)
+	config.pokedex[pokemon.Name] = pokemon
+	fmt.Printf("%s was caught!\n", pokemon.Name)
+
+	return nil
+}
+
+type Pokemon struct {
+	Id             int    `json:"id"`
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
+}
+
+func queryPokemonInfo(config *config, url string) (Pokemon, error) {
+
+	body, err := queryApi(config, url)
+	if err != nil {
+		return Pokemon{}, fmt.Errorf("error: %s", err)
+	}
+
+	location := Pokemon{}
+	err = json.Unmarshal(body, &location)
+	if err != nil {
+		return Pokemon{}, fmt.Errorf("error: %s", err)
+	}
+
+	return location, nil
 }
 
 func queryLocationArea(config *config, url string) (LocationPokeApiResponse, error) {

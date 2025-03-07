@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -29,7 +28,7 @@ func (c *PokeCache) Add(key string, val []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	fmt.Println("Cache added for: " + key)
+	//fmt.Println("Cache added for: " + key)
 
 	c.entries[key] = CacheEntry{val: val, createdAt: time.Now()}
 }
@@ -41,11 +40,11 @@ func (c *PokeCache) Get(key string) ([]byte, bool) {
 
 	value, ok := c.entries[key]
 	if !ok {
-		fmt.Println("Cache miss!")
+		//fmt.Println("Cache miss!")
 		return []byte{}, false
 	}
 
-	fmt.Println("Cache hit!")
+	//fmt.Println("Cache hit!")
 
 	return value.val, true
 }
