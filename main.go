@@ -53,6 +53,11 @@ func main() {
 			description: "Displays pokemon names of provided location areas.",
 			callback:    commandExplore,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspect a pokemon in the pokedex",
+			callback:    commandInspect,
+		},
 		"catch": {
 			name:        "catch",
 			description: "Catch a pokemon",
@@ -220,6 +225,30 @@ type LocationPokeApiResponse struct {
 	} `json:"pokemon_encounters"`
 }
 
+func commandInspect(config *config, params []string) error {
+	pokemonName := params[0]
+
+	pokemon, ok := config.pokedex[pokemonName]
+	if !ok {
+		fmt.Printf("you have not caught that pokemon\n")
+		return nil
+	}
+
+	fmt.Println("Name: " + pokemon.Name)
+	fmt.Printf("Height: %d\n", pokemon.Height)
+	fmt.Printf("Weight: %d\n", pokemon.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range pokemon.Stats {
+		fmt.Printf("  -%s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+
+	fmt.Println("Types:")
+	for _, t := range pokemon.Types {
+		fmt.Printf("  - %s\n", t.Type.Name)
+	}
+	return nil
+}
+
 func commandCatch(config *config, params []string) error {
 	pokemonName := params[0]
 	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
@@ -236,7 +265,6 @@ func commandCatch(config *config, params []string) error {
 		return nil
 	}
 
-	fmt.Println(pokemon)
 	config.pokedex[pokemon.Name] = pokemon
 	fmt.Printf("%s was caught!\n", pokemon.Name)
 
@@ -247,6 +275,19 @@ type Pokemon struct {
 	Id             int    `json:"id"`
 	Name           string `json:"name"`
 	BaseExperience int    `json:"base_experience"`
+	Height         int    `json:"height"`
+	Weight         int    `json:"weight"`
+	Stats          []struct {
+		BaseStat int `json:"base_stat"`
+		Stat     struct {
+			Name string `json:"name"`
+		} `json:"stat"`
+	} `json:"stats"`
+	Types []struct {
+		Type struct {
+			Name string `json:"name"`
+		} `json:"type"`
+	} `json:"types"`
 }
 
 func queryPokemonInfo(config *config, url string) (Pokemon, error) {
