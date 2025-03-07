@@ -58,6 +58,11 @@ func main() {
 			description: "Inspect a pokemon in the pokedex",
 			callback:    commandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "List caught pokemons",
+			callback:    commandPokedex,
+		},
 		"catch": {
 			name:        "catch",
 			description: "Catch a pokemon",
@@ -223,6 +228,19 @@ type LocationPokeApiResponse struct {
 			Version   PokemonVersion `json:"version"`
 		} `json:"version_details"`
 	} `json:"pokemon_encounters"`
+}
+
+func commandPokedex(config *config, params []string) error {
+	if len(config.pokedex) == 0 {
+		fmt.Printf("you have not caught any pokemon\n")
+		return nil
+	}
+
+	fmt.Println("Your Pokedex:")
+	for _, p := range config.pokedex {
+		fmt.Printf("  - %s\n", p.Name)
+	}
+	return nil
 }
 
 func commandInspect(config *config, params []string) error {
